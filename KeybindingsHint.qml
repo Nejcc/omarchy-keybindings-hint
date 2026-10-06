@@ -44,7 +44,7 @@ Item {
     keyPad: Style.spacing.lg, gap: Style.spacing.lg, columnGap: pad
   })
   readonly property real fit: needed > 0 ? Math.min(1, available / needed) : 1
-  // ponytail: 9px floor; below ~1250px logical width the last column can still clip.
+  // Keep readable text; the viewport scrolls if the columns still do not fit.
   readonly property int fontPx: Math.max(9, Math.floor(Style.font.title * fit))
   // Leftover width spreads between groups so the bar fills the screen.
   readonly property real groupGap: pad + Math.max(0, available - needed * fit) / Math.max(1, groups.length - 1)
@@ -153,6 +153,7 @@ Item {
     // watch was lost (the file was deleted or unreadable for a while).
     learnedFile.reload()
     root.opened = true
+    bindingViewport.contentX = 0
     hideTimer.restart()
     list.running = true   // refresh in the background; the cached list shows first
     activeWindow.running = true
@@ -334,47 +335,52 @@ Item {
           opacity: 0.35
         }
 
-        // Groups side by side, each as wide as its text.
-        Row {
-          id: columns
-          spacing: root.groupGap
+        BindingViewport {
+          id: bindingViewport
+          width: body.width
+          onInteracted: if (root.opened) hideTimer.restart()
+          // Groups side by side, each as wide as its text.
+          Row {
+            id: columns
+            spacing: root.groupGap
 
-          Repeater {
-            model: root.groups
-            delegate: Column {
-              id: group
-              required property var modelData
-              spacing: Style.spacing.md
+            Repeater {
+              model: root.groups
+              delegate: Column {
+                id: group
+                required property var modelData
+                spacing: Style.spacing.md
 
-              Text {
-                text: group.modelData.title.toUpperCase()
-                color: root.muted
-                font.family: Style.font.menuFamily
-                font.pixelSize: Style.font.caption
-                font.letterSpacing: 1.2
-                font.bold: true
-                bottomPadding: Style.spacing.xs
-              }
+                Text {
+                  text: group.modelData.title.toUpperCase()
+                  color: root.muted
+                  font.family: Style.font.menuFamily
+                  font.pixelSize: Style.font.caption
+                  font.letterSpacing: 1.2
+                  font.bold: true
+                  bottomPadding: Style.spacing.xs
+                }
 
-              Grid {
-                flow: Grid.TopToBottom
-                rows: Math.min(root.maxRows, group.modelData.items.length)
-                rowSpacing: Style.spacing.md
-                columnSpacing: root.pad
+                Grid {
+                  flow: Grid.TopToBottom
+                  rows: Math.min(root.maxRows, group.modelData.items.length)
+                  rowSpacing: Style.spacing.md
+                  columnSpacing: root.pad
 
-                Repeater {
-                  model: group.modelData.items
-                  delegate: Row {
-                    required property var modelData
-                    spacing: Style.spacing.lg
+                  Repeater {
+                    model: group.modelData.items
+                    delegate: Row {
+                      required property var modelData
+                      spacing: Style.spacing.lg
 
-                    Keycap { id: cap; label: modelData.key; filled: root.suggestedDescs.indexOf(modelData.desc) !== -1 }
-                    Text {
-                      anchors.verticalCenter: cap.verticalCenter
-                      text: modelData.desc
-                      color: root.text
-                      font.family: Style.font.menuFamily
-                      font.pixelSize: root.fontPx
+                      Keycap { id: cap; label: modelData.key; filled: root.suggestedDescs.indexOf(modelData.desc) !== -1 }
+                      Text {
+                        anchors.verticalCenter: cap.verticalCenter
+                        text: modelData.desc
+                        color: root.text
+                        font.family: Style.font.menuFamily
+                        font.pixelSize: root.fontPx
+                      }
                     }
                   }
                 }

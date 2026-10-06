@@ -20,4 +20,6 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       # Name the files: Node 22 reads a bare "tests/" as a file, not a folder.
+      - run: sudo apt-get update && sudo apt-get install -y qt6-declarative-dev-tools qml6-module-qtquick qml6-module-qtquick-window qml6-module-qtquick-controls qml6-module-qtquick-templates qml6-module-qtqml-workerscript qml6-module-qttest
       - run: node --test tests/*.test.mjs
+      - run: QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME=generic QT_QUICK_BACKEND=software /usr/lib/qt6/bin/qmltestrunner -input tests
