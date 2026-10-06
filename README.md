@@ -22,7 +22,7 @@ in Neovim. Let go of `SUPER` and it fades away.
 - **Never in the way:** the bar doesn't take the keyboard. Press a key while it
   shows and that binding runs as normal.
 - **Fits the screen:** each column is as wide as its text. On narrower screens
-  the text shrinks to fit rather than being cut off.
+  the text shrinks to a readable minimum; remaining columns scroll horizontally.
 - **Themed:** colors and font come from the current Omarchy theme.
 - **On/off switch:** turn the hint off when you don't want it. The setting is
   remembered across restarts.
@@ -170,11 +170,16 @@ node --test tests/*.test.mjs   # unit tests for the logic, no dependencies (also
 tests/smoke.sh                 # live test against your running Omarchy shell
 tests/stress.sh                # hard live stress test (takes over the screen; see the script)
 FUZZ_ROUNDS=200000 node --test tests/fuzz.test.mjs   # long fuzz run
+QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME=generic QT_QUICK_BACKEND=software /usr/lib/qt6/bin/qmltestrunner -input tests
 ```
 
 `tests/fuzz.test.mjs` throws tens of thousands of random and hostile inputs at
 the logic (broken `hyprctl` output, random key sequences, corrupt settings) and
 checks invariants. It runs with the unit tests.
+
+Packaging checks validate the manifest, entrypoints and JavaScript syntax.
+With Qt tools installed, they also parse QML. CI installs Qt and runs the
+headless viewport checks for narrow/scaled screens and long descriptions.
 
 The unit tests cover parsing, grouping, suggestions and learning, including
 corrupt or hostile settings files. The smoke test opens and closes the bar,
@@ -192,7 +197,8 @@ afterwards. Expect a few on/off notifications while it runs.
   has no categories. Anything unmatched lands in Other.
 - If a release is missed, the bar hides itself after 6 seconds.
 - On screens narrower than about 1900 logical pixels the text shrinks to fit,
-  down to 9px. Below about 1250px the last column can still be cut off.
+  down to 9px. Drag the horizontal scrollbar to reach columns that still do
+  not fit. Scrolling restarts the auto-hide timer while the bar is open.
 - After editing the plugin files, run `omarchy restart shell`. The shell's
   automatic reload doesn't always pick up changes.
 - For a few seconds right after login or a shell restart, holding `SUPER` may
@@ -208,3 +214,10 @@ window" and "Last window" keys that this bar suggests.
 ## License
 
 MIT
+
+## Releases
+
+After merging the prepared changes, run `scripts/release.sh` from a clean
+checkout. It checks the merged tree, runs offline tests, creates the manifest
+version tag and a GitHub release from `CHANGELOG.md`, then closes the release
+tracking issue. Git SSH access and an authenticated `gh` are required.
